@@ -42,7 +42,6 @@ public class AutomataView extends javax.swing.JFrame {
     private void initComponents() {
 
         diagramaImg = new javax.swing.JLabel();
-        crearDiagrama = new javax.swing.JButton();
         jScrollPane1 = new javax.swing.JScrollPane();
         tablaTran = new javax.swing.JTable();
         botonAgregarEstado = new javax.swing.JButton();
@@ -53,13 +52,6 @@ public class AutomataView extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
         setResizable(false);
-
-        crearDiagrama.setText("Crear diagrama");
-        crearDiagrama.addActionListener(new java.awt.event.ActionListener() {
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                crearDiagramaActionPerformed(evt);
-            }
-        });
 
         tablaTran.setModel(new javax.swing.table.DefaultTableModel(
             new Object [][] {
@@ -124,22 +116,18 @@ public class AutomataView extends javax.swing.JFrame {
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                 .addContainerGap(50, Short.MAX_VALUE)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(crearDiagrama)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                            .addComponent(creaDiagrama))
-                        .addComponent(diagramaImg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.DEFAULT_SIZE, 500, Short.MAX_VALUE)
-                        .addGroup(layout.createSequentialGroup()
-                            .addComponent(botonAgregarEstado, javax.swing.GroupLayout.PREFERRED_SIZE, 171, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                            .addComponent(botonEliminarEstado, javax.swing.GroupLayout.PREFERRED_SIZE, 174, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                    .addComponent(diagramaImg, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                    .addComponent(jScrollPane1)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(botonAgregarEstado, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 30, Short.MAX_VALUE)
+                        .addComponent(botonEliminarEstado, javax.swing.GroupLayout.PREFERRED_SIZE, 235, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(creaDiagrama, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
                     .addGroup(layout.createSequentialGroup()
                         .addComponent(input, javax.swing.GroupLayout.PREFERRED_SIZE, 274, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(39, 39, 39)
-                        .addComponent(evaluar)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(evaluar, javax.swing.GroupLayout.PREFERRED_SIZE, 163, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addGap(50, 50, 50))
         );
         layout.setVerticalGroup(
@@ -151,10 +139,8 @@ public class AutomataView extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(botonAgregarEstado)
                     .addComponent(botonEliminarEstado))
-                .addGap(18, 18, 18)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                    .addComponent(crearDiagrama)
-                    .addComponent(creaDiagrama))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addComponent(creaDiagrama, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(diagramaImg, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
                 .addGap(18, 18, 18)
@@ -206,15 +192,22 @@ public class AutomataView extends javax.swing.JFrame {
     private void creaDiagramaActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_creaDiagramaActionPerformed
         int rowCount = tablaTran.getRowCount();
         List<Estado> estados = new ArrayList<>();
+        boolean tieneFinal = false;
         for (int i = 0; i < rowCount; i++) {
             String nombreEstado = "q" + Integer.toString(i);
             boolean esFinal = false;
             String fdc = (String) tablaTran.getValueAt(i, 6);
             if (fdc.equals("Aceptar")) {
                 esFinal = true;
+                tieneFinal = true;
             }
             Estado estado = new Estado(nombreEstado, esFinal);
             estados.add(estado);
+        }
+        if (!tieneFinal) {
+            String mensaje = "Es necesario ingresar al menos un estado final.";
+            JOptionPane.showMessageDialog(rootPane, mensaje, "Error", 0);
+            return;
         }
         for (int i = 0; i < rowCount; i++) {
             String column1 = (String) tablaTran.getValueAt(i, 1);
@@ -251,16 +244,26 @@ public class AutomataView extends javax.swing.JFrame {
 
         automata.setEstados(estados);
         String directorio = new File("").getAbsolutePath();
-        directorio = directorio.concat("\\automata.txt");
-        try {
-            FileWriter escritor = new FileWriter(directorio);
+        String archivoTexto = directorio.concat("\\automata.txt");
+        String archivoImagen = directorio.concat("\\automata.png");
+
+        try ( FileWriter escritor = new FileWriter(archivoTexto)) {
             PrintWriter impresor = new PrintWriter(escritor);
             String diagraph = automata.toDiagraph();
             impresor.print(diagraph);
-            escritor.close();
         } catch (IOException ex) {
             Logger.getLogger(AutomataView.class.getName()).log(Level.SEVERE, null, ex);
         }
+        try {
+            FileWriter escritor = new FileWriter(archivoImagen);
+            ImageIcon imagen = new ImageIcon(escritor.toString());
+            Image icono = imagen.getImage().getScaledInstance(diagramaImg.getWidth(), diagramaImg.getHeight(), Image.SCALE_AREA_AVERAGING);
+            Icon iconoEscalado = new ImageIcon(icono);
+            diagramaImg.setIcon(iconoEscalado);
+        } catch (IOException ex) {
+            Logger.getLogger(AutomataView.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
     }//GEN-LAST:event_creaDiagramaActionPerformed
 
     private void evaluarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_evaluarActionPerformed
@@ -306,145 +309,10 @@ public class AutomataView extends javax.swing.JFrame {
         comboBox.removeItem(nombreEstado);
     }//GEN-LAST:event_botonEliminarEstadoActionPerformed
 
-    private void crearDiagramaActionPerformed(java.awt.event.ActionEvent evt) {
-
-        int nuevo = 0;
-        String estadofinal = "";
-
-        try {
-
-            for (int i = 0; i < tablaTran.getRowCount(); i++) {
-                if (tablaTran.getValueAt(i, 1) == null) {
-                    JOptionPane.showMessageDialog(null, "Debe llenar todos los campos de la tabla de transiciones");
-                    break;
-                } else {
-                    System.out.println("entra acaaaaa");
-                }
-            }
-
-            for (int i = 0; i < tablaTran.getRowCount(); i++) {
-                System.out.println("Estados: " + tablaTran.getValueAt(i, 0));
-                System.out.println("Vocal: " + tablaTran.getValueAt(i, 1));
-                System.out.println("+: " + tablaTran.getValueAt(i, 2));
-                System.out.println("-: " + tablaTran.getValueAt(i, 3));
-                System.out.println(".: " + tablaTran.getValueAt(i, 4));
-                System.out.println("/: " + tablaTran.getValueAt(i, 5));
-                System.out.println("FCP: " + tablaTran.getValueAt(i, 6));
-
-                String palabraViene = tablaTran.getValueAt(i, nuevo++).toString();
-                if (palabraViene.toUpperCase().equals("ERROR") || palabraViene.toUpperCase().equals("Q0")
-                        || palabraViene.toUpperCase().equals("Q1")
-                        || palabraViene.toUpperCase().equals("Q2")
-                        || palabraViene.toUpperCase().equals("Q3")
-                        || palabraViene.toUpperCase().equals("Q4")
-                        || palabraViene.toUpperCase().equals("Q5")
-                        || palabraViene.toUpperCase().equals("Q6")) {
-                    System.out.println("Soy todo lo aceptado: desde ERROR hasta Q6 ");
-                } else {
-                    JOptionPane.showMessageDialog(null, "campos inválidos");
-                    break;
-                }
-
-            }
-        } catch (HeadlessException ex) {
-            JOptionPane.showMessageDialog(null, "Error al abrir: " + ex);
-        }
-
-        List<String> fin = new ArrayList<>();
-        fin.add(estadofinal);
-
-        for (int i = 0; i < tablaTran.getRowCount(); i++) {
-            System.out.println("FCP: " + tablaTran.getValueAt(i, 6));
-            Object valores = tablaTran.getValueAt(i, 6);
-            if (valores.equals("Aceptar")) {
-                estadofinal = "doublecircle";
-                //System.out.println(estadofinal);
-                fin.add(estadofinal);
-            } else {
-                estadofinal = "circle";
-                //System.out.println(estadofinal);
-                fin.add(estadofinal);
-            }
-        }
-
-        System.out.println(fin);
-
-        //Aqui se crea el automata con el formato .dot y se guarda en un archivo txt
-        FileWriter fichero = null;
-        PrintWriter pw = null;
-
-        String automata = "digraph Automata {\n"
-                + "    rankdir=LR;\n"
-                + "    size=\"8,5\"\n"
-                + "\n"
-                + "    node [shape = " + fin.get(1) + "]; q0;\n"
-                + "    node [shape = " + fin.get(2) + "]; q1;\n"
-                + "    node [shape = " + fin.get(3) + "]; q2;\n"
-                + "    node [shape = " + fin.get(4) + "]; q3;\n"
-                + "    node [shape = " + fin.get(5) + "]; q4;\n"
-                + "    node [shape = " + fin.get(6) + "]; q5;\n"
-                + "    node [shape = " + fin.get(7) + "]; q6;\n"
-                + "    node [shape = point ]; qi\n"
-                + "\n"
-                //              + "    node [shape = circle];\n"
-                + "    qi -> q0;\n"
-                + "    q0  -> q1 [ label = \"a\" ];\n"
-                + "    q0  -> q0  [ label = \"a\" ];\n"
-                + "    q1 -> q0  [ label = \"a\" ];\n"
-                + "    q1 -> q2 [ label = \"b\" ];\n"
-                + "    q2 -> q1 [ label = \"b\" ];\n"
-                + "    q2 -> q2 [ label = \"b\" ];\n"
-                + "    q2  -> q3 [ label = \"a\" ];\n"
-                + "    q3  -> q4 [ label = \"a\" ];\n"
-                + "    q4  -> q5 [ label = \"a\" ];\n"
-                + "    q5  -> q6 [ label = \"a\" ];\n"
-                + "}";
-
-        try {
-            //fichero = new FileWriter("C:\\Users\\daphn\\OneDrive\\Documentos\\automata.txt");
-            fichero = new FileWriter("C:\\Users\\kenne\\Desktop\\automata.txt");
-            pw = new PrintWriter(fichero);
-
-            //pw.println(a.toDot());
-            pw.println(automata);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (null != fichero) {
-                    fichero.close();
-                }
-            } catch (Exception e2) {
-                e2.printStackTrace();
-            }
-        }
-
-//Aqui abre la imagen del automata que se creo        
-        //archivo = new File ("C:\\Users\\daphn\\OneDrive\\Documentos\\automata.jpg");
-        archivo = new File("C:\\Users\\kennet\\OneDrive\\Desktop\\automata.jpg");
-
-        try {
-            ImageIcon ImagIcon = new ImageIcon(archivo.toString());
-            Image icono = ImagIcon.getImage().getScaledInstance(diagramaImg.getWidth(), diagramaImg.getHeight(), Image.SCALE_AREA_AVERAGING);
-            Icon iconoEscalado = new ImageIcon(icono);
-            diagramaImg.setIcon(iconoEscalado);
-
-        } catch (Exception ex) {
-            JOptionPane.showMessageDialog(null, "Error al abrir: " + ex);
-        }
-
-    }// GEN-LAST:event_jButton1ActionPerformed
-
     public static void main(String args[]) {
         try {
             String dotPath = "C:\\Program Files\\Graphviz\\bin\\dot.exe";
-
-            // String fileInputPath =
-            // "C:\\Users\\daphn\\OneDrive\\Documentos\\automata.txt";
             String fileInputPath = "C:\\Users\\kenne\\OneDrive\\Desktop\\automata.txt";
-            // String fileOutputPath =
-            // "C:\\Users\\daphn\\OneDrive\\Documentos\\automata.jpg";
             String fileOutputPath = "C:\\Users\\kenne\\OneDrive\\Desktop\\automata.jpg";
 
             String tParam = "-Tjpg";
@@ -481,7 +349,6 @@ public class AutomataView extends javax.swing.JFrame {
     private javax.swing.JButton botonAgregarEstado;
     private javax.swing.JButton botonEliminarEstado;
     private javax.swing.JButton creaDiagrama;
-    private javax.swing.JButton crearDiagrama;
     public static javax.swing.JLabel diagramaImg;
     private javax.swing.JButton evaluar;
     private javax.swing.JTextField input;
