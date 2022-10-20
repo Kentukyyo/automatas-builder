@@ -1,0 +1,8 @@
+diagraph Automata {
+    rankdir=LR
+    size="8,5"
+    
+    node [shape = point]; qi;
+
+    qi -> q0;
+}
