@@ -25,16 +25,18 @@ public class Automata {
         return nuevoEstado.esFinal;
     }
 
-    public String toDiagraph() {
+    public String toDigraph() {
         StringBuilder diagraph = new StringBuilder();
-        diagraph.append("diagraph Automata {\n");
+        diagraph.append("digraph Automata {\n");
         diagraph.append("rankdir=LR\n".indent(4));
         diagraph.append("size=\"8,5\"\n\n".indent(4));
         for (Estado estado : estados) {
-            if (estado.getTransiciones().isEmpty()) {
-                continue;
+            if (estado.esFinal()) {
+                diagraph.append("    node [shape = doublecircle]; ");
+            } else {
+                diagraph.append("    node [shape = circle]; ");
             }
-            diagraph.append("    node [shape = circle]; ");
+
             diagraph.append(estado.getNombre());
             diagraph.append(";\n");
         }

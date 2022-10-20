@@ -2,6 +2,8 @@ package automata;
 
 import java.awt.HeadlessException;
 import java.awt.Image;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -15,6 +17,7 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 import javax.swing.JComboBox;
 import javax.swing.JOptionPane;
+import javax.swing.Timer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
 
@@ -58,7 +61,7 @@ public class AutomataView extends javax.swing.JFrame {
 
             },
             new String [] {
-                "Estados", "vocal", "+", "-", ".", "/", "FDC"
+                "Estados", "vocal", "+", "-", "*", "/", "FDC"
             }
         ) {
             boolean[] canEdit = new boolean [] {
@@ -141,9 +144,9 @@ public class AutomataView extends javax.swing.JFrame {
                     .addComponent(botonEliminarEstado))
                 .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
                 .addComponent(creaDiagrama, javax.swing.GroupLayout.PREFERRED_SIZE, 35, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addComponent(diagramaImg, javax.swing.GroupLayout.PREFERRED_SIZE, 156, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(18, 18, 18)
+                .addGap(30, 30, 30)
+                .addComponent(diagramaImg, javax.swing.GroupLayout.PREFERRED_SIZE, 115, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(35, 35, 35)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(input, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                     .addComponent(evaluar))
@@ -180,7 +183,7 @@ public class AutomataView extends javax.swing.JFrame {
     }
     private void botonAgregarEstadoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_botonAgregarEstadoActionPerformed
         int rowCount = tablaTran.getRowCount();
-        if (rowCount >= 7) {
+        if (rowCount >= 10) {
             return;
         }
         DefaultTableModel model = (DefaultTableModel) tablaTran.getModel();
@@ -232,7 +235,7 @@ public class AutomataView extends javax.swing.JFrame {
             }
             if (!column4.isEmpty() && !column4.equals("Error")) {
                 int indice = Estado.getIndice(column4);
-                Transicion transicion = new Transicion('.', estados.get(indice));
+                Transicion transicion = new Transicion('*', estados.get(indice));
                 estados.get(i).agregarTransicion(transicion);
             }
             if (!column5.isEmpty() && !column5.equals("Error")) {
@@ -245,24 +248,58 @@ public class AutomataView extends javax.swing.JFrame {
         automata.setEstados(estados);
         String directorio = new File("").getAbsolutePath();
         String archivoTexto = directorio.concat("\\automata.txt");
-        String archivoImagen = directorio.concat("\\automata.png");
+        String archivoImagen = directorio.concat("\\automata.jpg");
+
+        System.out.println(archivoImagen);
 
         try ( FileWriter escritor = new FileWriter(archivoTexto)) {
             PrintWriter impresor = new PrintWriter(escritor);
-            String diagraph = automata.toDiagraph();
+            String diagraph = automata.toDigraph();
             impresor.print(diagraph);
         } catch (IOException ex) {
             Logger.getLogger(AutomataView.class.getName()).log(Level.SEVERE, null, ex);
         }
         try {
-            FileWriter escritor = new FileWriter(archivoImagen);
-            ImageIcon imagen = new ImageIcon(escritor.toString());
-            Image icono = imagen.getImage().getScaledInstance(diagramaImg.getWidth(), diagramaImg.getHeight(), Image.SCALE_AREA_AVERAGING);
-            Icon iconoEscalado = new ImageIcon(icono);
-            diagramaImg.setIcon(iconoEscalado);
+            String dotPath = "C:\\Program Files\\Graphviz\\bin\\dot.exe";
+
+            String tParam = "-Tjpg";
+            String tOParam = "-o";
+
+            String[] cmd = new String[5];
+            cmd[0] = dotPath;
+            cmd[1] = tParam;
+            cmd[2] = archivoTexto;
+            cmd[3] = tOParam;
+            cmd[4] = archivoImagen;
+
+            Runtime rt = Runtime.getRuntime();
+
+            rt.exec(cmd);
+
         } catch (IOException ex) {
             Logger.getLogger(AutomataView.class.getName()).log(Level.SEVERE, null, ex);
         }
+        ActionListener listener = (ActionEvent event) -> {
+            //Aqui abre la imagen del automata que se creo
+            archivo = new File(archivoImagen);
+            //archivo = new File("C:\\Users\\DPALACIOS\\Desktop\\automata.jpg");
+            
+            try {
+                ImageIcon ImagIcon = new ImageIcon(archivo.toString());
+                Image icono = ImagIcon.getImage().getScaledInstance(diagramaImg.getWidth(), diagramaImg.getHeight(), Image.SCALE_AREA_AVERAGING);
+                Icon iconoEscalado = new ImageIcon(icono);
+                diagramaImg.setIcon(iconoEscalado);
+                
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(null, "Error al abrir: " + ex);
+            }
+        };
+
+        Timer timer = new Timer(2000, listener);
+        timer.setRepeats(false);
+        timer.start();
+
+        System.out.println("se creooooooo el archivo");
 
     }//GEN-LAST:event_creaDiagramaActionPerformed
 
@@ -272,7 +309,7 @@ public class AutomataView extends javax.swing.JFrame {
             return;
         }
 
-        String expresion = input.getText();
+        String expresion = input.getText().toLowerCase();
         int longitud = automata.getEstados().size();
         Estado inicial = automata.getEstados().get(0);
         boolean inicialVacio = inicial.getTransiciones().isEmpty();
@@ -311,23 +348,6 @@ public class AutomataView extends javax.swing.JFrame {
 
     public static void main(String args[]) {
         try {
-            String dotPath = "C:\\Program Files\\Graphviz\\bin\\dot.exe";
-            String fileInputPath = "C:\\Users\\kenne\\OneDrive\\Desktop\\automata.txt";
-            String fileOutputPath = "C:\\Users\\kenne\\OneDrive\\Desktop\\automata.jpg";
-
-            String tParam = "-Tjpg";
-            String tOParam = "-o";
-
-            String[] cmd = new String[5];
-            cmd[0] = dotPath;
-            cmd[1] = tParam;
-            cmd[2] = fileInputPath;
-            cmd[3] = tOParam;
-            cmd[4] = fileOutputPath;
-
-            Runtime rt = Runtime.getRuntime();
-
-            rt.exec(cmd);
 
         } catch (Exception ex) {
             ex.printStackTrace();
